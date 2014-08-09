@@ -24,7 +24,7 @@ loop {                          # Servers run forever
       if msg == 'bye'
         clients.delete id
         alive = false
-        puts "Clinet #{id} signing off"
+        puts "Client #{id} signing off"
       else
         packet = JSON.parse msg
         this.merge! packet

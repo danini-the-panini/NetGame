@@ -5,14 +5,18 @@ require 'json'
 HOSTNAME = ARGV[0] || 'localhost'
 PORT = ARGV[1] || 2000
 
+SPEED = 0.1
+
 class NetGame < Gosu::Window
   def initialize width=640, height=480, fullscreen=false
     super
 
     puts "Connecting to #{HOSTNAME}:#{PORT}"
-    @me = {x: Gosu::random(0.0,640.0), y: Gosu::random(0.0,480.0)}
+    @me = {x: Gosu::random(0.0,640.0), y: Gosu::random(0.0,480.0),
+           vx: 0.0, vy: 0.0}
     @others = {}
     @img = Gosu::Image.from_text self, "X", "monospace", 30
+    @time = Gosu::milliseconds
 
     @running = true
     @net_thread = Thread.start(TCPSocket.open(HOSTNAME, PORT)) do |server|
@@ -38,19 +42,18 @@ class NetGame < Gosu::Window
   end
 
   def button_down id
-    case id
-    when Gosu::KbUp
-      @me[:y] -= 10
-    when Gosu::KbDown
-      @me[:y] += 10
-    when Gosu::KbLeft
-      @me[:x] -= 10
-    when Gosu::KbRight
-      @me[:x] += 10
-    end
+    close if id == Gosu::KbEscape
   end
 
   def update
+    newtime = Gosu::milliseconds
+    @delta = newtime - @time
+    @time = newtime
+
+    @me[:x] += SPEED * @delta if button_down? Gosu::KbRight
+    @me[:y] += SPEED * @delta if button_down? Gosu::KbDown
+    @me[:x] -= SPEED * @delta if button_down? Gosu::KbLeft
+    @me[:y] -= SPEED * @delta if button_down? Gosu::KbUp
   end
 
   def draw
