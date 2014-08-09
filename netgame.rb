@@ -50,10 +50,20 @@ class NetGame < Gosu::Window
     @delta = newtime - @time
     @time = newtime
 
-    @me[:x] += SPEED * @delta if button_down? Gosu::KbRight
-    @me[:y] += SPEED * @delta if button_down? Gosu::KbDown
-    @me[:x] -= SPEED * @delta if button_down? Gosu::KbLeft
-    @me[:y] -= SPEED * @delta if button_down? Gosu::KbUp
+    vx, vy = 0.0, 0.0
+    vx += 1 if button_down? Gosu::KbRight
+    vy += 1 if button_down? Gosu::KbDown
+    vx -= 1 if button_down? Gosu::KbLeft
+    vy -= 1 if button_down? Gosu::KbUp
+
+    @me[:vx], @me[:vy] = vx*SPEED, vy*SPEED
+    @me[:x] += @me[:vx] * @delta
+    @me[:y] += @me[:vy] * @delta
+
+    @others.each do |i,o|
+      o['x'] += o['vx'] * @delta
+      o['y'] += o['vy'] * @delta
+    end
   end
 
   def draw
