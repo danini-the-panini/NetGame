@@ -8,6 +8,7 @@ server = TCPServer.open(2000)   # Socket to listen on port 2000
 loop {                          # Servers run forever
   Thread.start(server.accept) do |client|
     id = client_id
+    puts "Client #{id} connected."
     client_id += 1
     client.puts id
     this = JSON.parse(client.gets)
@@ -21,7 +22,6 @@ loop {                          # Servers run forever
       else
         packet = JSON.parse msg
         this.merge! packet
-        puts "#{id}: getting #{packet}"
 
         client.puts clients.size
         clients.each do |i,c|

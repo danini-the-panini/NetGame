@@ -2,20 +2,33 @@ require 'gosu'
 require 'socket'      # Sockets are in standard library
 require 'json'
 
-HOSTNAME = 'localhost'
-PORT = 2000
-
+HOSTNAME = ARGV[0] || 'localhost'
+PORT = ARGV[1] || 2000
 
 class NetGame < Gosu::Window
   def initialize width=640, height=480, fullscreen=false
     super
 
+    puts "Connecting to #{HOSTNAME}:#{PORT}"
     @socket = TCPSocket.open(HOSTNAME, PORT)
     @id = @socket.gets.to_i
     @me = {x: Gosu::random(0.0,640.0), y: Gosu::random(0.0,480.0)}
     @others = {}
     @socket.puts JSON.generate(@me)
     @img = Gosu::Image.from_text self, "X", "monospace", 30
+  end
+
+  def button_down id
+    case id
+    when Gosu::KbUp
+      @me[:y] -= 10
+    when Gosu::KbDown
+      @me[:y] += 10
+    when Gosu::KbLeft
+      @me[:x] -= 10
+    when Gosu::KbRight
+      @me[:x] += 10
+    end
   end
 
   def update
