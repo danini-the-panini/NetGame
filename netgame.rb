@@ -10,12 +10,31 @@ class NetGame < Gosu::Window
     super
 
     puts "Connecting to #{HOSTNAME}:#{PORT}"
-    @socket = TCPSocket.open(HOSTNAME, PORT)
-    @id = @socket.gets.to_i
     @me = {x: Gosu::random(0.0,640.0), y: Gosu::random(0.0,480.0)}
     @others = {}
-    @socket.puts JSON.generate(@me)
     @img = Gosu::Image.from_text self, "X", "monospace", 30
+
+    @running = true
+    @net_thread = Thread.start(TCPSocket.open(HOSTNAME, PORT)) do |server|
+      @id = server.gets.to_i
+      puts "I am number #{@id}"
+      server.puts JSON.generate(@me)
+
+      do_network server while @running
+
+      server.puts 'bye'
+      server.close
+    end
+  end
+
+  def do_network server
+    server.puts JSON.generate(@me)
+
+    count = server.gets.to_i
+    count.times do
+      packet = JSON.parse(server.gets)
+      (@others[packet['id']] ||= {}).merge! packet
+    end
   end
 
   def button_down id
@@ -32,13 +51,6 @@ class NetGame < Gosu::Window
   end
 
   def update
-    @socket.puts JSON.generate(@me)
-
-    count = @socket.gets.to_i
-    count.times do
-      packet = JSON.parse(@socket.gets)
-      @others[packet['id']] = packet
-    end
   end
 
   def draw
@@ -49,11 +61,13 @@ class NetGame < Gosu::Window
   end
 
   def destroy
-    @socket.puts "bye"
-    @socket.close
+    puts "Bye Bye..."
+    @running = false
+    @net_thread.join
   end
 end
 
-game = NetGame.new.show
+game = NetGame.new
+game.show
 
 game.destroy
